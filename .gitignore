@@ -1,0 +1,34 @@
+# Özel Veriler ve API Anahtarları
+.env
+credentials.json
+
+# Python Sanal Ortamları
+.venv/
+venv/
+env/
+ENV/
+*.venv/
+
+# Derlenmiş Python Dosyaları (Byte-compiled)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Kullanıcı Yüklemeleri (Geçici dosyalar)
+uploads/
+
+# macOS Sistem Dosyaları
+.DS_Store
+
+# IDE Konfigürasyonları (VS Code vb.)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Log ve Dağıtım Dosyaları
+*.log
+build/
+dist/
+*.egg-info/
