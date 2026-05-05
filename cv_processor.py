@@ -36,17 +36,19 @@ def analyze_cv_with_gemini(cv_text):
       "email": "E-posta",
       "telefon": "Telefon",
       "yetenekler": "Anahtar yetenekler virgülle ayrılmış (max 5)",
+      "seniority": "Junior veya Senior",
       "deneyim_yili": "Örn: 3",
       "egitim": "En son / En yüksek eğitim seviyesi (örn: Üniversite mezunu)",
-      "siniflandirma": "mülakat, işe alım veya deneme",
-      "puan": "Adayın uygunluk puanı (0-100 arası bir sayı)",
+      "siniflandirma": "screen, reject veya interview",
+      "puan": "Adayın teknik puanı (0-100 arası bir sayı). Değerlendirme rolü: 'Full stack developer becerisi olucak react ve mongodb bilmesi lazım'. Bu role uygunluğa göre puanla.",
       "ozet": "Aday hakkında kısa bir değerlendirme özeti (max 2 cümle)"
     }
     
     Sınıflandırma Mantığı (Buna uymak KRİTİKTİR):
-    - Adayın iş tecrübesi yüksekse, sektör deneyimi varsa ve yetenekleri güçlü bir profil çiziyorsa sonucunu kesinlikle "işe alım" yap.
-    - Adayın yetenekleri, aranan ortalamalarda ise, bazı belirsizlikler veya eksikler olsa da görüşmek projeye değer katar diyorsan sonucunu "mülakat" yap.
-    - Adayın deneyimi yoksa (mezun veya öğrenci), stajyere uygunsa veya deneyimi yetersiz görünüp sadece potansiyeli varsa "deneme" yap.
+    - Adayın aranan role (React, MongoDB full stack) yetenekleri tam, deneyimi iyiyse sonucunu "interview" yap.
+    - Adayın yetenekleri role potansiyel gösteriyor ama bazı eksikleri varsa veya ön görüşme yapmak gerekliyse "screen" yap.
+    - Aday aranan rolden tamamen uzaksa "reject" yap.
+    - Eğer CV'de isim, email, telefon, yetenekler, eğitim, deneyim yılı gibi alanlar bulunmuyorsa değerlerini boş bırak ("").
     
     CV Metni:
     """ + cv_text
@@ -90,21 +92,26 @@ def append_to_gsheet(data):
         except Exception:
             headers = []
             
-        expected_headers = ["İsim", "Email", "Telefon", "Yetenekler", "Deneyim Yılı", "Eğitim", "Sınıflandırma", "Puan", "Özet"]
+        expected_headers = ["İsim", "Email", "Telefon", "Yetenekler", "Seniority", "Deneyim Yılı", "Eğitim", "Sınıflandırma", "Puan", "Özet"]
         if not headers or headers != expected_headers:
             # If the sheet is completely empty or headers mismatch exactly, inject our standard headers
             sheet.insert_row(expected_headers, index=1)
             
+        def get_val(key):
+            val = str(data.get(key, "")).strip()
+            return val if val else "Invalid"
+
         row_data = [
-            data.get("isim", ""),
-            data.get("email", ""),
-            data.get("telefon", ""),
-            data.get("yetenekler", ""),
-            str(data.get("deneyim_yili", "")),
-            data.get("egitim", ""),
-            data.get("siniflandirma", ""),
-            str(data.get("puan", "")),
-            data.get("ozet", "")
+            get_val("isim"),
+            get_val("email"),
+            get_val("telefon"),
+            get_val("yetenekler"),
+            get_val("seniority"),
+            get_val("deneyim_yili"),
+            get_val("egitim"),
+            get_val("siniflandirma"),
+            get_val("puan"),
+            get_val("ozet")
         ]
         
         sheet.append_row(row_data)
@@ -143,9 +150,9 @@ def process_cv(filepath):
     # 3. Log to Google Sheets
     append_to_gsheet(data)
     
-    # 4. Notify via Slack sadece işe alım ise
+    # 4. Notify via Slack sadece interview ise
     siniflandirma_karari = str(data.get('siniflandirma', '')).lower().strip()
-    if 'işe alım' in siniflandirma_karari or 'ise alim' in siniflandirma_karari:
+    if 'interview' in siniflandirma_karari:
         send_slack_notification(data)
     
     return data
